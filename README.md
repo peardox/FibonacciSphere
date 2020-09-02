@@ -6,7 +6,7 @@ This application requires that the Castle Game Engine components are installed i
 
 FibonacciSphere is cross-platform functioning the same on Windows, MacOSX and Linux. It's also cross-CPU having been tested on x64 and Arm64 (with some minor modifications Android and iOS would also work)
 
-(Lazarus 20.11 / FPC 3.2.0 / CGE unstable 6,5 used in development)
+(Lazarus 2.0.11 / FPC 3.2.0 / CGE unstable 6.5 used in development)
 
 ### About FibonacciSphere
 

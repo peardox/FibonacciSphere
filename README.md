@@ -34,13 +34,13 @@ Line 54 - ModelFilename = 'castle-data:/box_roty.x3dv';
 
 Line 56 - ScaleMultplier = 1.0;
 
-Changing SecsPerRot controls how long in seconds it takes the sphere to make one full revolution in the Y Axis. 
+SecsPerRot controls how long in seconds it takes the sphere to make one full revolution in the Y Axis. 
 
 ObjectsOnSphere controls how many cubes make up the sphere, fewer and the framerate will be higher resulting in smoother animation but beware - if you go stupidly high you will eventually hit a framerate of zero :)
 
 ModelFilename defines the 3d model used to construct the sphere. You can copy a model (obj, x3d, gltf) into the data directory and change the filename here to use something more interesting than a boring textured cube.
 
-ScaleMultplier changes how big the individual objects are displayed. If you change the 3d model then there's a good chance that the objects will be too bug for the desired results. Altering this number allows you to scale your chosen model so it fits the scene again. The cube used in this demo is 1x1x1 so if you use a model that's, for example, 3x2x1 in size then setting ScaleMultiplier to (1/3) = 0.3333 will make your model fit in the intended space,
+ScaleMultplier changes how big the individual objects are displayed. If you change the 3d model then there's a good chance that the objects will be too big for the desired results. Altering this number allows you to scale your chosen model so it fits the scene again. The cube used in this demo is 1x1x1 so if you use a model that's, for example, 3x2x1 in size then setting ScaleMultiplier to (1/3) = 0.3333 will make your model fit in the intended space,
 
 ### ToDo
 

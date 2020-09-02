@@ -20,6 +20,8 @@ Pressing the 'F' key will switch the application between FullScreen and windowed
 
 Pressing the 'R' key will make the sphere rotate in the Y (vertical) Axis. Repeatedly pressing the 'R' key will pause / resume the sphere rotation.
 
+Pressing the 'C' key will move the camera inside the sphere. Pressing the 'C' key again will restore the previous position.
+
 The application additionally supports CGE's default navigation keys and mouse controls - note that this can be confusing if the sphere is already rotating using the R key...
 
 ### Hacking the Code

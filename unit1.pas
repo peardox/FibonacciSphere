@@ -27,15 +27,17 @@ type
   private
     Viewport: TCastleViewport;
     Scene: TCastleScene;
+    CamPos, CamDir, CamUp: TVector3;
+    CameraAtOrigin: Boolean;
+    FullScreen: Boolean;
+    RotateSphere: Boolean;
+    RenderedFirstFrame: Boolean;
+    LoadTimer: Int64;
+    Scale: Single;
+    SavedTheta: Single;
     procedure LoadScene(filename: String);
     procedure CreateViewport;
   public
-    FullScreen: Boolean;
-    RotateSphere: Boolean;
-    Scale: Single;
-    SavedTheta: Single;
-    RenderedFirstFrame: Boolean;
-    LoadTimer: Int64;
     infoNotifications: TCastleNotifications;
     timeNotifications: TCastleNotifications;
     function BuildSphere(Filename: String; ObjCount: Integer = 1): TX3DRootNode;
@@ -122,6 +124,7 @@ begin
   infoNotifications.Show('Control Keys' + LineEnding +
     'F = Toggle FullScreen' + LineEnding +
     'R = Rotate Sphere in Y Axis' + LineEnding +
+    'C = Position Camera inside Sphere' + LineEnding +
     LineEnding +
     'FPS : ' +
     FormatFloat('####0.00',CastleControlBase1.Fps.RealFps) +
@@ -150,6 +153,25 @@ begin
   if Event.IsKey(keyF) then
     begin
       ToggleFullScreen;
+    end;
+
+  // Toggle Camera Position (0, 0, 0) / normal
+  if Event.IsKey(keyC) then
+    begin
+      if CameraAtOrigin then
+        begin
+          Viewport.Camera.SetView(CamPos, CamDir, CamUp);
+        end
+      else
+        begin
+          // Save the camera settings
+          Viewport.Camera.GetView(CamPos, CamDir, CamUp);
+          Viewport.Camera.SetView(Vector3(0, 0, 0),
+                                  Vector3(0, 0, 0),
+                                  Vector3(0, 1, 0));
+        end;
+        // Switch CameraAtOrigin after saving settings!!!
+        CameraAtOrigin := not CameraAtOrigin;
     end;
 
   // Toggle Rotation in the Y Axis
@@ -257,7 +279,7 @@ begin
 
   // Add the info notification area to the CGE control
   infoNotifications := TCastleNotifications.Create(Application);
-  infoNotifications.MaxMessages := 5;
+  infoNotifications.MaxMessages := 6;
   infoNotifications.Anchor(hpLeft, 10);
   infoNotifications.Anchor(vpBottom, 10);
 
@@ -292,6 +314,12 @@ begin
 
   // Tell the control this is the main scene so it gets some lighting
   Viewport.Items.MainScene := Scene;
+
+  // Save the default camera settings
+  if not(CameraAtOrigin) then
+    begin
+      Viewport.Camera.GetView(CamPos, CamDir, CamUp);
+    end;
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
@@ -308,6 +336,8 @@ begin
   SavedTheta := 0;
   // Not FullScreen
   FullScreen := False;
+  // Position Camera inside Sphere?
+  CameraAtOrigin := False;
   // Don't rotate the sphere at start
   RotateSphere := False;
   // Create a Viewport

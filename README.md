@@ -18,7 +18,7 @@ If compiled and run without alteration the application will start in a 1/4 sized
 
 Pressing the 'F' key will switch the application between FullScreen and windowed modes.
 
-Pressing the 'R' key will make the sphere rotate in the Y (vertical) Axis. Repeatedly pressing the 'R' key acts sphere pause / resume rotation.
+Pressing the 'R' key will make the sphere rotate in the Y (vertical) Axis. Repeatedly pressing the 'R' key will pause / resume the sphere rotation.
 
 The application additionally supports CGE's default navigation keys and mouse controls - note that this can be confusing if the sphere is already rotating using the R key...
 

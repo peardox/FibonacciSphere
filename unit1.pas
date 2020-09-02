@@ -48,12 +48,15 @@ var
 const
   // How many seconds to take to rotate the scene (Number)
   SecsPerRot = 30;
-  // Dupe declaration hack
-  BorderNone = Controls.bsNone;
   // How many objects (Integer)
   ObjectsOnSphere = 540;
+  // The 3D model to use when building the sphere
+  ModelFilename = 'castle-data:/box_roty.x3dv';
   // Scale of each object (Single)
   ScaleMultiplier = 1.0;
+
+  // Dupe declaration hack - leave this one alone or it won't compile
+  BorderNone = Controls.bsNone;
 
 implementation
 
@@ -68,10 +71,8 @@ begin
   if FullScreen then
     begin
       // Go FullScreen
-      {$if defined(linux)}
+      {$if defined(linux) or defined(darwin)}
       WindowState := wsFullScreen;
-      {$elseif defined(darwin)}
-      ShowWindow(Handle, SW_SHOWFULLSCREEN);
       {$else}
       Menu := nil;
       BorderStyle := BorderNone;
@@ -82,10 +83,8 @@ begin
   else
     begin
       // Go Windowed
-      {$if defined(linux)}
+      {$if defined(linux) or defined(darwin)}
       WindowState := wsNormal;
-      {$elseif defined(darwin)}
-      ShowWindow(Handle, SW_SHOWNORMAL);
       {$else}
       WindowState := wsNormal; // wsMinimized, wsMaximized, wsFullScreen
       BorderStyle := bsSizeable; // bsDialog, bsNone, bsSingle
@@ -314,7 +313,7 @@ begin
   // Create a Viewport
   CreateViewport;
   // Create and load the Fibonacci Sphere into the Viewport
-  LoadScene('castle-data:/box_roty.x3dv');
+  LoadScene(ModelFilename);
 end;
 
 end.

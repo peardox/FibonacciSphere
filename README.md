@@ -14,7 +14,7 @@ FibonacciSphere is cross-platform functioning the same on Windows, MacOSX and Li
 
 
 
-If compiled and run without alteration the application will start in a 1/4 sized window. 
+If compiled and run without alteration the application will start in a 1/4 sized window and will look something like the above - your FPS etc will vary.
 
 Pressing the 'F' key will switch the application between FullScreen and windowed modes.
 

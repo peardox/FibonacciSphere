@@ -1,0 +1,23 @@
+object Form1: TForm1
+  Left = 294
+  Height = 480
+  Top = 182
+  Width = 640
+  Caption = 'Form1'
+  ClientHeight = 480
+  ClientWidth = 640
+  OnCreate = FormCreate
+  Position = poScreenCenter
+  LCLVersion = '2.0.8.0'
+  object CastleControlBase1: TCastleControlBase
+    Left = 0
+    Height = 480
+    Top = 0
+    Width = 640
+    Align = alClient
+    Options = []
+    TabOrder = 0
+    OnBeforeRender = CastleControlBase1BeforeRender
+    OnPress = CastleControlBase1Press
+  end
+end

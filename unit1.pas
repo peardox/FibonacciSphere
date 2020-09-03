@@ -40,6 +40,7 @@ type
   public
     infoNotifications: TCastleNotifications;
     timeNotifications: TCastleNotifications;
+    viewNotifications: TCastleNotifications;
     function BuildSphere(Filename: String; ObjCount: Integer = 1): TX3DRootNode;
     procedure ToggleFullScreen;
   end;
@@ -98,6 +99,7 @@ end;
 
 procedure TForm1.CastleControlBase1BeforeRender(Sender: TObject);
 var
+  Pos, Dir, Up: TVector3;
   theta: Single;
 begin
   if not RenderedFirstFrame then
@@ -130,8 +132,7 @@ begin
     FormatFloat('####0.00',CastleControlBase1.Fps.RealFps) +
     ', ' +
     FormatFloat('####0.00',CastleControlBase1.Fps.OnlyRenderFps) +
-    ' (OnlyRender)'
-    );
+    ' (OnlyRender)');
 
   // Show the load time, number of objects and scale
   timeNotifications.Show('Time To First Frame : ' +
@@ -142,6 +143,18 @@ begin
     FormatFloat('####0.00000',Scale)
     );
 
+  // Get and show camera settings
+  Viewport.Camera.GetView(Pos, Dir, Up);
+  viewNotifications.Show('Camera Settings' + LineEnding + 'Pos : (' +
+                      FormatFloat('####0.00', Pos.X) + ', ' +
+                      FormatFloat('####0.00', Pos.Y) + ', ' +
+                      FormatFloat('####0.00', Pos.Z) + ')' + LineEnding + 'Dir : (' +
+                      FormatFloat('####0.00', Dir.X) + ', ' +
+                      FormatFloat('####0.00', Dir.Y) + ', ' +
+                      FormatFloat('####0.00', Dir.Z) + ')' + LineEnding + 'Up  : (' +
+                      FormatFloat('####0.00', Up.X) + ', ' +
+                      FormatFloat('####0.00', Up.Y) + ', ' +
+                      FormatFloat('####0.00', Up.Z) + ')' + LineEnding);
 end;
 
 procedure TForm1.CastleControlBase1Press(Sender: TObject;
@@ -203,9 +216,9 @@ end;
 function TForm1.BuildSphere(Filename: String; ObjCount: Integer = 1): TX3DRootNode;
 var
   GroupNode: TGroupNode;
-  TransformNode: TTransformNode;
   GridNode: TX3DRootNode;
   GridObject: TX3DRootNode;
+  TransformNode: TTransformNode;
   {$ifdef usedeepcopy}
   NewGridNode: TX3DRootNode;
   {$endif}
@@ -225,7 +238,7 @@ begin
 
   // The scale of objects making up the Sphere is
   // the inverse square root of the number of objects
-  // divided by 2 (Sphere is raduis 1, objects are radius 0.5)
+  // divided by 2 (Sphere is radius 1, objects are radius 0.5)
   // ScaleMultiplier allows fine tuning of object size
   Scale := (1 / (sqrt(ObjCount) / 2)) * ScaleMultiplier;
 
@@ -289,10 +302,17 @@ begin
   timeNotifications.Anchor(hpLeft, 10);
   timeNotifications.Anchor(vpTop, -10);
 
+  // Add the view notification area to the CGE control
+  viewNotifications := TCastleNotifications.Create(Application);
+  viewNotifications.MaxMessages := 4;
+  viewNotifications.Anchor(hpRight, -10);
+  viewNotifications.Anchor(vpTop, -10);
+
   // Add the viewport to the CGE control
   CastleControlBase1.Controls.InsertFront(Viewport);
   CastleControlBase1.Controls.InsertFront(infoNotifications);
   CastleControlBase1.Controls.InsertFront(timeNotifications);
+  CastleControlBase1.Controls.InsertFront(viewNotifications);
 end;
 
 procedure TForm1.LoadScene(filename: String);
@@ -309,6 +329,8 @@ begin
   // Load a model into the scene
   SphereNode := BuildSphere(FileName, ObjectsOnSphere);
   Scene.Load(SphereNode, True);
+
+
   // Add the scene to the viewport
   Viewport.Items.Add(Scene);
 

@@ -31,16 +31,20 @@ type
     CameraAtOrigin: Boolean;
     FullScreen: Boolean;
     RotateSphere: Boolean;
+    RotateObjects: Boolean;
     RenderedFirstFrame: Boolean;
     LoadTimer: Int64;
     Scale: Single;
     SavedTheta: Single;
     procedure LoadScene(filename: String);
     procedure CreateViewport;
+    procedure Spinner(Node: TX3DNode);
   public
     infoNotifications: TCastleNotifications;
     timeNotifications: TCastleNotifications;
     viewNotifications: TCastleNotifications;
+    ObjectsOnSphere: Integer;
+    SecsPerRot: Integer;
     function BuildSphere(Filename: String; ObjCount: Integer = 1): TX3DRootNode;
     procedure ToggleFullScreen;
   end;
@@ -50,13 +54,13 @@ var
 
 const
   // How many seconds to take to rotate the scene (Number)
-  SecsPerRot = 30;
+  InitialSecsPerRot = 32;
   // How many objects (Integer)
-  ObjectsOnSphere = 540;
+  InitialObjectsOnSphere = 256;
   // The 3D model to use when building the sphere
-  ModelFilename = 'castle-data:/box_roty.x3dv';
+  ModelFilename = 'castle-data:/oblique.glb';
   // Scale of each object (Single)
-  ScaleMultiplier = 1.0;
+  ScaleMultiplier = 0.5;
 
   // Dupe declaration hack - leave this one alone or it won't compile
   BorderNone = Controls.bsNone;
@@ -97,10 +101,27 @@ begin
     end;
 end;
 
+procedure TForm1.Spinner(Node: TX3DNode);
+var
+  Transform: TTransformNode;
+  Rot: TVector4;
+begin
+  Transform := Node as TTransformNode;
+  Rot := Transform.Rotation;
+  Rot.W := Transform.Rotation.W + 0.1;
+  {
+  (((CastleGetTickCount64 mod
+             (SecsPerRot * 1000)) /
+             (SecsPerRot * 1000)) * (Pi * 2)) + Transform.Rotation.W;
+  }
+  Transform.Rotation := Rot;
+end;
+
 procedure TForm1.CastleControlBase1BeforeRender(Sender: TObject);
 var
   Pos, Dir, Up: TVector3;
   theta: Single;
+  ObjNode: TGroupNode;
 begin
   if not RenderedFirstFrame then
     begin
@@ -108,7 +129,24 @@ begin
       LoadTimer := CastleGetTickCount64 - LoadTimer;
       // This is a one-shot so set RenderedFirstFrame
       RenderedFirstFrame := True;
-    end;
+      // Save the default camera settings
+      if not(CameraAtOrigin) then
+        begin
+          Viewport.Camera.GetView(CamPos, CamDir, CamUp);
+          Viewport.Camera.Position := Vector3(0, 0, 3);
+        end;
+    end
+  else
+    // Show the load time, number of objects and scale
+    timeNotifications.Show('Time To First Frame : ' +
+      FormatFloat('####0.000',LoadTimer / 1000) +
+      ', Objects : ' +
+      IntToStr(ObjectsOnSphere) +
+      ', Scale : ' +
+      FormatFloat('####0.00000',Scale)
+      );
+
+
 
   if RotateSphere and not (Scene = nil) then
     begin
@@ -120,28 +158,33 @@ begin
       // Rotate the scene in Y
       // Change to Vector4(1, 0, 0, theta); to rotate in X
       Scene.Rotation := Vector4(0, 1, 0, theta);
+      if RotateObjects then
+        begin
+          ObjNode := Scene.RootNode.FindNodeByName(TGroupNode, 'SphereGroup', True) as TGroupNode;
+          if not (ObjNode = nil) then
+            begin
+              ObjNode.EnumerateNodes(TTransformNode, @Spinner, True);
+            end;
+        end;
     end;
 
   // Show the control keys and frame rate
   infoNotifications.Show('Control Keys' + LineEnding +
+    'D = Double Number of Objects' + LineEnding +
+    'H = Halve Number of Objects' + LineEnding +
     'F = Toggle FullScreen' + LineEnding +
-    'R = Rotate Sphere in Y Axis' + LineEnding +
-    'C = Position Camera inside Sphere' + LineEnding +
+    'R = Toggle Sphere Rotation' + LineEnding +
+    'S = Toggle Object Spin' + LineEnding +
+    'C = Position Camera inside/outside Sphere' + LineEnding +
+    '[ = Rotate Slower' + LineEnding +
+    '] = Rotate Faster' + LineEnding +
+    'ESC = Quit' + LineEnding +
     LineEnding +
     'FPS : ' +
     FormatFloat('####0.00',CastleControlBase1.Fps.RealFps) +
     ', ' +
     FormatFloat('####0.00',CastleControlBase1.Fps.OnlyRenderFps) +
     ' (OnlyRender)');
-
-  // Show the load time, number of objects and scale
-  timeNotifications.Show('Time To First Frame : ' +
-    FormatFloat('####0.000',LoadTimer / 1000) +
-    ', Objects : ' +
-    IntToStr(ObjectsOnSphere) +
-    ', Scale : ' +
-    FormatFloat('####0.00000',Scale)
-    );
 
   // Get and show camera settings
   Viewport.Camera.GetView(Pos, Dir, Up);
@@ -168,12 +211,48 @@ begin
       ToggleFullScreen;
     end;
 
+  if Event.IsKey(']') then
+    begin
+      if SecsPerRot >= 1 then
+        SecsPerRot := SecsPerRot div 2;
+    end;
+
+  if Event.IsKey('[') then
+    begin
+      SecsPerRot := SecsPerRot * 2;
+    end;
+
+  if Event.IsKey(keyH) then
+    begin
+      if ObjectsOnSphere >= 16 then
+        ObjectsOnSphere := ObjectsOnSphere div 2;
+            // Show the load time, number of objects and scale
+      timeNotifications.Show('Building scene for ' +
+        IntToStr(ObjectsOnSphere) + ' objects');
+      LoadScene(ModelFilename);
+    end;
+
+  if Event.IsKey(keyD) then
+    begin
+      ObjectsOnSphere := ObjectsOnSphere * 2;
+      // Show the load time, number of objects and scale
+      timeNotifications.Show('Building scene for ' +
+        IntToStr(ObjectsOnSphere) + ' objects');
+      LoadScene(ModelFilename);
+    end;
+
+  if Event.IsKey(keyEscape) then
+    begin
+      Application.Terminate;
+    end;
+
   // Toggle Camera Position (0, 0, 0) / normal
   if Event.IsKey(keyC) then
     begin
       if CameraAtOrigin then
         begin
           Viewport.Camera.SetView(CamPos, CamDir, CamUp);
+          Viewport.Camera.Position := Vector3(0, 0, 3);
         end
       else
         begin
@@ -185,6 +264,12 @@ begin
         end;
         // Switch CameraAtOrigin after saving settings!!!
         CameraAtOrigin := not CameraAtOrigin;
+    end;
+
+  // Toggle Object Spin
+  if Event.IsKey(keyS) then
+    begin
+      RotateObjects := Not RotateObjects;
     end;
 
   // Toggle Rotation in the Y Axis
@@ -229,10 +314,12 @@ var
   Theta: Single;
   Radius: Single;
   Idx: Integer;
+  ObjRotation: TVector4;
 begin
   // Create the required objects
   GridObject := LoadNode(FileName);
   GroupNode := TGroupNode.Create;
+  GroupNode.X3DName:='SphereGroup'; // Make it easy to find later
   GridNode := TX3DRootNode.Create;
   GridNode.AddChildren(GroupNode);
 
@@ -260,6 +347,10 @@ begin
       TransformNode := TTransformNode.Create;
       TransformNode.Scale := Vector3(Scale, Scale, Scale);
       TransformNode.Translation := Vector3(XPos, YPos, ZPos);
+      repeat // Avoid rotation axis of (0, 0, 0)
+        ObjRotation :=  Vector4(random * 2 * Pi, random * 2 * Pi, random * 2 * Pi, random * 2 * Pi)
+      until not((ObjRotation.X = 0) and (ObjRotation.Y = 0) and (ObjRotation.Z = 0));
+      TransformNode.Rotation := ObjRotation;
       {$ifdef usedeepcopy}
       NewGridNode := GridObject.DeepCopy as TX3DRootNode;
       TransformNode.AddChildren(NewGridNode);
@@ -292,7 +383,7 @@ begin
 
   // Add the info notification area to the CGE control
   infoNotifications := TCastleNotifications.Create(Application);
-  infoNotifications.MaxMessages := 6;
+  infoNotifications.MaxMessages := 11;
   infoNotifications.Anchor(hpLeft, 10);
   infoNotifications.Anchor(vpBottom, 10);
 
@@ -319,6 +410,12 @@ procedure TForm1.LoadScene(filename: String);
 var
   SphereNode: TX3DRootNode;
 begin
+  if Assigned(Scene) then
+    begin
+      FreeAndNil(Scene);
+      LoadTimer := CastleGetTickCount64;
+      RenderedFirstFrame := False;
+    end;
   // Create a scene
   Scene := TCastleScene.Create(Application);
 
@@ -329,19 +426,13 @@ begin
   // Load a model into the scene
   SphereNode := BuildSphere(FileName, ObjectsOnSphere);
   Scene.Load(SphereNode, True);
-
+//  Scene.Scale := Vector3(0.5, 0.5, 0.5);
 
   // Add the scene to the viewport
   Viewport.Items.Add(Scene);
 
   // Tell the control this is the main scene so it gets some lighting
   Viewport.Items.MainScene := Scene;
-
-  // Save the default camera settings
-  if not(CameraAtOrigin) then
-    begin
-      Viewport.Camera.GetView(CamPos, CamDir, CamUp);
-    end;
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
@@ -360,11 +451,15 @@ begin
   FullScreen := False;
   // Position Camera inside Sphere?
   CameraAtOrigin := False;
-  // Don't rotate the sphere at start
-  RotateSphere := False;
+  // Rotate the sphere at start?
+  RotateSphere := True;
+  // Rotate the objects at start?
+  RotateObjects := False;
   // Create a Viewport
   CreateViewport;
   // Create and load the Fibonacci Sphere into the Viewport
+  SecsPerRot := InitialSecsPerRot;
+  ObjectsOnSphere := InitialObjectsOnSphere;
   LoadScene(ModelFilename);
 end;
 
